@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 class Program
 {
@@ -32,15 +30,20 @@ class Program
 
     static string ConvertMarkdownToHtml(string markdownText)
     {
-        string htmlText = markdownText;
+        if (Regex.IsMatch(markdownText, @"\*\*.*_.*\*\*|\*\*.*`.*\*\*|_.*\*\*.*_|_.*`.*_|`.*\*\*.*`|`.*_.*`"))
+        {
+            throw new InvalidOperationException("Nested markup detected. Cannot convert.");
+        }
 
+        string htmlText = markdownText;
+        
         htmlText = Regex.Replace(htmlText, @"\*\*(.*?)\*\*", "<b>$1</b>");
         htmlText = Regex.Replace(htmlText, @"_(.*?)_", "<i>$1</i>");
         htmlText = Regex.Replace(htmlText, @"```([\s\S]*?)```", "<pre>$1</pre>");
         htmlText = Regex.Replace(htmlText, @"`(.*?)`", "<tt>$1</tt>");
         htmlText = Regex.Replace(htmlText, @"\n{2,}", "</p>\n<p>");
         htmlText = "<p>" + htmlText + "</p>";
-
+        
         return htmlText;
     }
 }
