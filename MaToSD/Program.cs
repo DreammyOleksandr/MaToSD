@@ -34,18 +34,14 @@ class Program
                     content.Append(lines[i]);
                     i++;
                 }
-
                 content.AppendLine("</p>");
             }
-
             if (i < lines.Length)
             {
                 string convertedLine = Convert(lines[i]);
                 content.AppendLine(convertedLine);
             }
         }
-
-        var result = content.ToString();
         Console.WriteLine(content.ToString());
     }
 
@@ -53,26 +49,42 @@ class Program
     {
         if (line.Equals(""))
             return null;
-
+        
         //this is a Bold text 
         if (Regex.IsMatch(line, @"\*\*(.*?)\*\*"))
+        {
             line = Regex.Replace(line, @"\*\*(.*?)\*\*", "<b>$1</b>");
+            if (Regex.IsMatch(line, @"_(.*?)_") || Regex.IsMatch(line, @"`([^`]+)`"))
+                throw new Exception("Nested markup inside <b></b> is detected");
+        }
 
         //this is an Italic text 
         if (Regex.IsMatch(line, @"_(.*?)_"))
+        {
             line = Regex.Replace(line, @"_(.*?)_", "<i>$1</i>");
+            if (Regex.IsMatch(line, @"\*\*(.*?)\*\*") || Regex.IsMatch(line, @"`([^`]+)`"))
+                throw new Exception("Nested markup inside <i></i> is detected");
+        }
 
         //this is a Monospaced text 
         if (Regex.IsMatch(line, @"`([^`]+)`"))
+        {
             line = Regex.Replace(line, @"`([^`]+)`", "<tt>$1</tt>");
-
+            if (Regex.IsMatch(line, @"\*\*(.*?)\*\*") || Regex.IsMatch(line, @"_(.*?)_"))
+                throw new Exception("Nested markup inside <tt></tt> is detected");
+        }
 
         line = "<p>" + line + "</p>";
         return line;
     }
-
+    
     static string PrePartsConverter(string text)
     {
+        if (Regex.IsMatch(text, @"\*\*(.*?)```\s*([\s\S]*?)\s*```(.*?)\*\*") ||
+            Regex.IsMatch(text, @"_(.*?)```\s*([\s\S]*?)\s*```(.*?)_") ||
+            Regex.IsMatch(text, @"`(.*?)```\s*([\s\S]*?)\s*```(.*?)`"))
+            throw new Exception("Nested markup is detected");
+        
         if ((Regex.IsMatch(text, @"```\s*([\s\S]*?)\s*") || Regex.IsMatch(text, @"\s*([\s\S]*?)\s*```")) &&
             !Regex.IsMatch(text, @"```\s*([\s\S]*?)\s*```"))
             throw new Exception("pre part is not opened/closed correctly");
