@@ -23,3 +23,5 @@ dotnet build MaToSD.csproj
 ```
 dotnet run MaToSD.csproj <--out> <шлях до файлу>
 ```
+
+[Реверт-комміт](https://github.com/DreammyOleksandr/MaToSD/commit/c70abab02834d7b62910b2b35013e86c25331db4)
