@@ -5,8 +5,7 @@ class Program
 {
     static void Main(string[] args)
     {
-        string filePath = "/Users/bondarenkooleksandr/C#Projects/MaToSD/MaToSD/TestMarkDown.md";
-        StringBuilder content = new();
+        string filePath = args[^1];
 
         if (!File.Exists(filePath))
         {
@@ -17,7 +16,20 @@ class Program
         string text = File.ReadAllText(filePath);
         text = PrePartsConverter(text);
         IsOpenedClosedCorrectly(text);
+        text = ConvertToHtml(text);
 
+        Console.WriteLine(text);
+
+        if (args.Contains("--out"))
+        {
+            string outputFile = Path.ChangeExtension(filePath, ".html");
+            File.WriteAllText(outputFile, text);
+        }
+    }
+    
+    private static string ConvertToHtml(string text)
+    {
+        StringBuilder content = new();
         string[] lines = text.Split("\n\r".ToCharArray());
         for (int i = 0; i < lines.Length; i++)
         {
@@ -35,32 +47,33 @@ class Program
                     content.Append(lines[i]);
                     i++;
                 }
+
                 content.AppendLine("</p>");
             }
+
             if (i < lines.Length)
             {
-                string convertedLine = Convert(lines[i]);
+                string convertedLine = ConvertSimpleMarkUp(lines[i]);
                 content.AppendLine(convertedLine);
             }
         }
-        Console.WriteLine(content.ToString());
+        return content.ToString();
     }
-
+    
     private static void IsOpenedClosedCorrectly(string text)
     {
         MatchCollection boldMatches = Regex.Matches(text, @"\*\*");
-        if (boldMatches.Count % 2 != 0)
-            throw new Exception("b markup is not opened/closed correctly");
-        
+        if (boldMatches.Count % 2 != 0) throw new Exception("b markup is not opened/closed correctly");
+
         if ((Regex.IsMatch(text, @"`([^`]+)") || Regex.IsMatch(text, @"([^`]+)`")) &&
             !Regex.IsMatch(text, @"`([^`]+)`"))
             throw new Exception("tt markup is not opened/closed correctly");
     }
 
-    private static string Convert(string line)
+    private static string ConvertSimpleMarkUp(string line)
     {
         if (line.Equals("")) return null;
-        
+
         //this is a Bold text 
         if (Regex.IsMatch(line, @"\*\*(.*?)\*\*"))
         {
@@ -84,18 +97,16 @@ class Program
             if (Regex.IsMatch(line, @"\*\*(.*?)\*\*") || Regex.IsMatch(line, @"_(.*?)_"))
                 throw new Exception("Nested markup inside <tt></tt> is detected");
         }
-
-        line = "<p>" + line + "</p>";
-        return line;
+        return "<p>" + line + "</p>";
     }
-    
+
     private static string PrePartsConverter(string text)
     {
         if (Regex.IsMatch(text, @"\*\*(.*?)```\s*([\s\S]*?)\s*```(.*?)\*\*") ||
             Regex.IsMatch(text, @"_(.*?)```\s*([\s\S]*?)\s*```(.*?)_") ||
             Regex.IsMatch(text, @"`(.*?)```\s*([\s\S]*?)\s*```(.*?)`"))
             throw new Exception("Nested markup is detected");
-        
+
         if ((Regex.IsMatch(text, @"```\s*([\s\S]*?)\s*") || Regex.IsMatch(text, @"\s*([\s\S]*?)\s*```")) &&
             !Regex.IsMatch(text, @"```\s*([\s\S]*?)\s*```"))
             throw new Exception("pre markup is not opened/closed correctly");
