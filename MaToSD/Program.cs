@@ -16,6 +16,7 @@ class Program
 
         string text = File.ReadAllText(filePath);
         text = PrePartsConverter(text);
+        IsOpenedClosedCorrectly(text);
 
         string[] lines = text.Split("\n\r".ToCharArray());
         for (int i = 0; i < lines.Length; i++)
@@ -45,10 +46,20 @@ class Program
         Console.WriteLine(content.ToString());
     }
 
-    static string Convert(string line)
+    private static void IsOpenedClosedCorrectly(string text)
     {
-        if (line.Equals(""))
-            return null;
+        MatchCollection boldMatches = Regex.Matches(text, @"\*\*");
+        if (boldMatches.Count % 2 != 0)
+            throw new Exception("b markup is not opened/closed correctly");
+        
+        if ((Regex.IsMatch(text, @"`([^`]+)") || Regex.IsMatch(text, @"([^`]+)`")) &&
+            !Regex.IsMatch(text, @"`([^`]+)`"))
+            throw new Exception("tt markup is not opened/closed correctly");
+    }
+
+    private static string Convert(string line)
+    {
+        if (line.Equals("")) return null;
         
         //this is a Bold text 
         if (Regex.IsMatch(line, @"\*\*(.*?)\*\*"))
@@ -78,7 +89,7 @@ class Program
         return line;
     }
     
-    static string PrePartsConverter(string text)
+    private static string PrePartsConverter(string text)
     {
         if (Regex.IsMatch(text, @"\*\*(.*?)```\s*([\s\S]*?)\s*```(.*?)\*\*") ||
             Regex.IsMatch(text, @"_(.*?)```\s*([\s\S]*?)\s*```(.*?)_") ||
@@ -87,7 +98,7 @@ class Program
         
         if ((Regex.IsMatch(text, @"```\s*([\s\S]*?)\s*") || Regex.IsMatch(text, @"\s*([\s\S]*?)\s*```")) &&
             !Regex.IsMatch(text, @"```\s*([\s\S]*?)\s*```"))
-            throw new Exception("pre part is not opened/closed correctly");
+            throw new Exception("pre markup is not opened/closed correctly");
 
         if (Regex.IsMatch(text, @"```\s*([\s\S]*?)\s*```"))
             text = Regex.Replace(text, @"```\s*([\s\S]*?)\s*```", "<pre>$1</pre>");
@@ -95,7 +106,7 @@ class Program
         return text;
     }
 
-    static bool IsMarkUp(string line) =>
+    private static bool IsMarkUp(string line) =>
         Regex.IsMatch(line, @"```\s*([\s\S]*?)\s*```") ||
         Regex.IsMatch(line, @"\*\*(.*?)\*\*") ||
         Regex.IsMatch(line, @"`([^`]+)`") ||
